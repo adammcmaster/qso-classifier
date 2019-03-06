@@ -8,42 +8,42 @@ import csv
 from random import shuffle
 
 
-class ObjectClass:
-    STAR = 0
-    QSO = 1
+object_classes = {
+    'STAR': 0,
+    'QSO': 1,
+}
 
-
-INPUTS = (
-    ('data/Stars.csv', ObjectClass.STAR),
-    ('data/QSOs.csv', ObjectClass.QSO),
-)
+COLOUR_FIELDS = ('u', 'g', 'i', 'r', 'z')
 
 data = []
 
-for filename, obj_class in INPUTS:
-    with open(filename) as input_f:
-        r = csv.DictReader(input_f)
-        for row in r:
-            data.append((
-                float(row['u']) - float(row['g']),
-                float(row['g']) - float(row['r']),
-                obj_class,
-            ))
+with open('data/SDSS.csv') as input_f:
+    r = csv.DictReader(input_f)
+    for row in r:
+        values = [object_classes[row['class']]]
+        processed_fields = []
+        for field in COLOUR_FIELDS:
+            processed_fields.append(field)
+            for field2 in COLOUR_FIELDS:
+                if field2 in processed_fields:
+                    continue
+                values.append(float(row[field]) - float(row[field2]))
+        data.append(values)
 
 shuffle(data)
 
-train_data = data[100:]
-train_labels = np.array([d[2] for d in train_data])
-train_data = np.array([d[:2] for d in train_data])
+train_data = data[1000:]
+train_labels = np.array([d[0] for d in train_data])
+train_data = np.array([d[1:] for d in train_data])
 
-test_data = data[:100]
-test_labels = np.array([d[2] for d in test_data])
-test_data = np.array([d[:2] for d in test_data])
+test_data = data[:1000]
+test_labels = np.array([d[0] for d in test_data])
+test_data = np.array([d[1:] for d in test_data])
 
 
 model = keras.Sequential([
-    keras.layers.Dense(2, activation=tf.nn.relu),
-    keras.layers.Dense(8, activation=tf.nn.relu),
+    keras.layers.Dense(11, activation=tf.nn.relu),
+    keras.layers.Dense(128, activation=tf.nn.relu),
     keras.layers.Dense(2, activation=tf.nn.softmax)
 ])
 
@@ -53,7 +53,7 @@ model.compile(
     metrics=['accuracy'],
 )
 
-model.fit(train_data, train_labels, epochs=5)
+model.fit(train_data, train_labels, epochs=10)
 
 test_loss, test_acc = model.evaluate(test_data, test_labels)
 
