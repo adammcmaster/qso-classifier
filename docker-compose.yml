@@ -1,0 +1,9 @@
+version: '3.2'
+
+services:
+  classify:
+    build:
+      context:  ./
+      dockerfile: Dockerfile
+    volumes:
+      - ${PWD}:/usr/src/
